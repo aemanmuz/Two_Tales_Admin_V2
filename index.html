@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Two Tales Business Admin</title>
+<meta name="theme-color" content="#3b2a20">
+<meta name="application-name" content="Two Tales Business Admin">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+/* theme: remembered choice, else follow the system */
+(function(){try{var t=localStorage.getItem('tt_theme');if(!t)t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme='light'}})();
+</script>
+<style>
+:root{
+  --bg:#f3e9dc;--bg2:#ead9c3;--card:#fbf6ee;--tx:#3b2a20;--mut:#8a7565;--pri:#8b5e3c;--pri2:#b98558;--bd:#e2d3c0;
+  --ok:#4d7a45;--warn:#a8741a;--bad:#a8412f;--okbg:#e3ecd6;--warnbg:#f6e7c3;--badbg:#f3d9d1;
+  --shadow:0 10px 30px -12px rgba(90,60,35,.28);--blob1:#d9b48a;--blob2:#c9a27a;--blob3:#e8cfae;
+}
+:root[data-theme=dark]{
+  --bg:#1c1410;--bg2:#241a15;--card:#2a1d17;--tx:#f1e4d3;--mut:#b39b84;--pri:#c68b59;--pri2:#e0a874;--bd:#4a3528;
+  --ok:#a9cf95;--warn:#e6bf6a;--bad:#e59a86;--okbg:#2f3d29;--warnbg:#4a3b1c;--badbg:#4d2a22;
+  --shadow:0 12px 34px -14px rgba(0,0,0,.7);--blob1:#6b4228;--blob2:#4a2c1b;--blob3:#7a5030;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font:14px 'Poppins',system-ui,sans-serif;background:var(--bg);color:var(--tx);display:flex;min-height:100vh;transition:background .5s,color .5s;overflow-x:hidden}
+h2,h3,.brand b{font-family:'Playfair Display',Georgia,serif}
+
+/* floating ambient blobs */
+.bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.bg i{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;animation:float 18s ease-in-out infinite}
+.bg i:nth-child(1){width:380px;height:380px;background:var(--blob1);top:-80px;left:12%}
+.bg i:nth-child(2){width:300px;height:300px;background:var(--blob2);bottom:-60px;right:8%;animation-delay:-6s;animation-duration:22s}
+.bg i:nth-child(3){width:240px;height:240px;background:var(--blob3);top:45%;left:48%;animation-delay:-11s;animation-duration:26s}
+@keyframes float{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(60px,40px) scale(1.15)}66%{transform:translate(-40px,70px) scale(.9)}}
+
+/* sidebar */
+nav{width:226px;background:color-mix(in srgb,var(--card) 82%,transparent);backdrop-filter:blur(14px);border-right:1px solid var(--bd);padding:18px 14px;display:flex;flex-direction:column;gap:5px;position:sticky;top:0;height:100vh;z-index:2;animation:slideIn .8s cubic-bezier(.2,.8,.2,1) both}
+@keyframes slideIn{from{transform:translateX(-40px);opacity:0}to{transform:none;opacity:1}}
+.brand{padding:4px 8px 16px;border-bottom:1px dashed var(--bd);margin-bottom:10px}
+.brand b{display:block;font-size:24px;line-height:1.05;background:linear-gradient(110deg,var(--pri),var(--pri2),var(--pri));background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 5s linear infinite}
+.brand small{display:block;margin-top:5px;font-size:10.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--mut)}
+@keyframes shine{to{background-position:200% center}}
+nav a{position:relative;padding:10px 12px 10px 14px;border-radius:12px;cursor:pointer;display:flex;gap:10px;align-items:center;color:var(--tx);transition:transform .25s,background .25s,color .25s;overflow:hidden}
+nav a .ic{width:20px;text-align:center;opacity:.8;transition:transform .35s}
+nav a:hover{background:color-mix(in srgb,var(--pri) 14%,transparent);transform:translateX(5px)}
+nav a:hover .ic{transform:rotate(-12deg) scale(1.25)}
+nav a.on{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff7ec;box-shadow:0 8px 18px -8px var(--pri)}
+nav a.on::before{content:"";position:absolute;left:0;top:20%;bottom:20%;width:3px;border-radius:3px;background:#fff7ec;animation:grow .4s both}
+@keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+
+main{flex:1;padding:26px 28px;min-width:0;position:relative;z-index:1}
+h2{font-size:30px;margin:0 0 18px;position:relative;display:inline-block}
+h2::after{content:"";position:absolute;left:0;bottom:-6px;height:3px;width:56%;border-radius:3px;background:linear-gradient(90deg,var(--pri),transparent);transform-origin:left;animation:underline 1s .2s both}
+@keyframes underline{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+h3{margin:0 0 12px;font-size:18px}
+
+/* entrance animations (disabled on in-page refreshes via .still) */
+main>*,.cards>.card,.pg>.pb,.grid2>*{animation:rise .65s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*70ms)}
+@keyframes rise{from{opacity:0;transform:translateY(22px) scale(.98)}to{opacity:1;transform:none}}
+main.still *{animation:none!important}
+main.still h2::after{animation:none!important}
+
+.card{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:16px;margin-bottom:16px;box-shadow:var(--shadow);transition:transform .3s,box-shadow .3s,border-color .3s}
+.card:hover{border-color:color-mix(in srgb,var(--pri) 45%,var(--bd))}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:16px}
+.cards .card{margin:0;position:relative;overflow:hidden;color:var(--mut);font-size:12.5px;letter-spacing:.03em}
+.cards .card::after{content:"";position:absolute;top:-40%;left:-60%;width:40%;height:180%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.22),transparent);transform:rotate(18deg);transition:left .8s}
+.cards .card:hover{transform:translateY(-6px)}
+.cards .card:hover::after{left:130%}
+.cards b{font:700 24px 'Playfair Display',serif;display:block;margin-top:6px;color:var(--tx)}
+.grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+.pg{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px;margin-bottom:12px}
+.pb{position:relative;overflow:hidden;padding:14px;border:1px solid var(--bd);border-radius:14px;background:var(--bg);color:var(--tx);cursor:pointer;font:inherit;text-align:left;transition:transform .25s,box-shadow .25s,border-color .25s}
+.pb:hover{border-color:var(--pri);transform:translateY(-5px) rotate(-1deg);box-shadow:var(--shadow)}
+.pb:active{transform:scale(.94)}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px 8px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap}
+th{color:var(--mut);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.08em}
+tbody tr{transition:background .25s,transform .25s;animation:rowin .5s both;animation-delay:calc(var(--r,0)*45ms)}
+tbody tr:hover{background:color-mix(in srgb,var(--pri) 9%,transparent);transform:translateX(4px)}
+@keyframes rowin{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+
+.btn{position:relative;overflow:hidden;padding:8px 14px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;cursor:pointer;font:inherit;transition:transform .2s,box-shadow .25s,background .25s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 16px -8px rgba(90,60,35,.5)}
+.btn:active{transform:scale(.95)}
+.btn.p{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff7ec;border-color:transparent}
+.btn.d{color:var(--bad)}
+.ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.45);transform:scale(0);animation:rip .6s ease-out forwards;pointer-events:none}
+@keyframes rip{to{transform:scale(4);opacity:0}}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;align-items:center}.mut{color:var(--mut)}
+label{display:block;margin:10px 0;color:var(--mut);font-size:12px}
+input,select,textarea{width:100%;padding:10px;margin-top:4px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit;transition:border-color .25s,box-shadow .25s,transform .25s}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--pri);box-shadow:0 0 0 4px color-mix(in srgb,var(--pri) 22%,transparent);transform:translateY(-1px)}
+.tag{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11.5px;background:var(--bd)}
+.Completed,.OK{background:var(--okbg);color:var(--ok)}.Pending,.Restock{background:var(--warnbg);color:var(--warn)}.Cancelled,.Out{background:var(--badbg);color:var(--bad)}
+.Pending{animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--warn) 45%,transparent)}50%{box-shadow:0 0 0 7px transparent}}
+
+#modal,#login{position:fixed;inset:0;background:rgba(30,18,10,.55);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:50;padding:10px}
+#modal[style*="flex"],#login[style*="flex"]{animation:fade .3s both}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.box{background:var(--card);border:1px solid var(--bd);padding:24px;border-radius:20px;width:430px;max-width:100%;max-height:90vh;overflow:auto;box-shadow:0 30px 60px -20px rgba(0,0,0,.5);animation:pop .5s cubic-bezier(.2,1.3,.4,1) both}
+@keyframes pop{from{opacity:0;transform:scale(.8) translateY(30px)}to{opacity:1;transform:none}}
+
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal div{min-height:88px;border:1px solid var(--bd);border-radius:12px;padding:6px;font-size:12px;overflow:hidden;background:var(--bg);transition:transform .25s,border-color .25s}
+.cal div:not(.h):hover{transform:scale(1.05);border-color:var(--pri);z-index:1}
+.cal .h{min-height:0;text-align:center;color:var(--mut);border:0;background:none}
+.ev{display:block;background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff7ec;border-radius:6px;padding:2px 6px;margin-top:3px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;transition:transform .2s}
+.ev:hover{transform:scale(1.06)}
+.big{font:700 24px 'Playfair Display',serif}
+.qr{max-width:180px;display:block;margin:8px auto;border-radius:14px;box-shadow:var(--shadow);animation:pop .6s both}
+
+input.ck{width:17px;height:17px;margin:0;padding:0;accent-color:var(--pri);cursor:pointer;display:block;box-shadow:none;transition:transform .2s}
+input.ck:hover{transform:scale(1.2)}
+.bulk{padding:8px 12px;border:1px dashed var(--bd);border-radius:12px;background:color-mix(in srgb,var(--pri) 6%,transparent)}
+.bulk span{margin-right:auto;font-weight:500}
+.seller-panel{padding:14px;border:1px solid var(--bd);border-radius:14px;background:color-mix(in srgb,var(--pri) 9%,var(--card));margin-bottom:14px}
+.seller-panel label{margin-bottom:0}
+tbody tr:has(.ck:checked){background:color-mix(in srgb,var(--pri) 15%,transparent)}
+.product-editor{width:760px;max-width:100%}
+.product-base-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.product-tip{font-size:12px;line-height:1.6}
+.variant-entry{background:var(--bg);border:1px solid var(--bd);border-radius:14px;padding:12px;margin:10px 0;animation:rise .25s ease both}
+.variant-fields{display:grid;grid-template-columns:minmax(120px,2fr) minmax(95px,1fr) minmax(85px,1fr) auto;gap:10px;align-items:end}
+.variant-fields label{margin:0}.variant-remove{margin-bottom:0;height:40px}
+@media(max-width:600px){.product-base-fields{grid-template-columns:1fr}.variant-fields{grid-template-columns:1fr 1fr}.variant-fields label:first-child{grid-column:1/-1}.variant-remove{grid-column:1/-1}}
+/* theme toggle, toast, confetti */
+.theme{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin:2px 0 8px}
+.theme span{display:inline-block;transition:transform .6s cubic-bezier(.2,1.4,.4,1)}
+.theme:hover span{transform:rotate(360deg)}
+#toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,120px);background:var(--pri);color:#fff7ec;padding:12px 22px;border-radius:99px;box-shadow:var(--shadow);z-index:99;transition:transform .5s cubic-bezier(.2,1.4,.4,1);font-weight:500}
+#toast.on{transform:translate(-50%,0)}
+.coin{position:fixed;z-index:98;pointer-events:none;width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#fff1c9,#c68b59);animation:coin 1.2s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes coin{to{transform:translate(var(--x),var(--y)) rotate(540deg);opacity:0}}
+
+::-webkit-scrollbar{height:8px;width:8px}::-webkit-scrollbar-thumb{background:var(--bd);border-radius:8px}
+@media(max-width:800px){body{flex-direction:column}nav{width:100%;height:auto;position:static;flex-direction:row;flex-wrap:wrap}.brand{border:0;width:100%;padding-bottom:6px}.grid2{grid-template-columns:1fr}main{padding:16px}}
+@media print{nav,.row,.btn,#modal,.bg,#toast{display:none!important}body{background:#fff;color:#000}.card{border:0;box-shadow:none}*{animation:none!important}}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition:none!important}}
+</style></head><body>
+
+<div class="bg"><i></i><i></i><i></i></div>
+<div id="toast"></div>
+
+<div id="login"><div class="box"><h3>Two Tales Business Admin</h3>
+<label>Email<input id="em" type="email"></label><label>Password<input id="pw" type="password"></label>
+<p class="mut" style="font-size:12px">Sign in with a Supabase Auth account to access your cloud business records.</p><p id="lerr" style="color:var(--bad)" role="alert"></p>
+<div class="row"><button class="btn p" onclick="auth('in')">Login</button></div></div></div>
+<div id="modal"></div>
+
+<nav><div class="brand"><b>Two Tales</b><small>Business Admin</small></div>
+<a data-p="dash"><span class="ic">◈</span>Dashboard</a><a data-p="pos"><span class="ic">❖</span>Point of Sales</a><a data-p="products"><span class="ic">◇</span>Products</a><a data-p="orders"><span class="ic">☰</span>Orders &amp; Sales</a><a data-p="cal"><span class="ic">▦</span>Order Calendar</a>
+<a data-p="inv"><span class="ic">⬡</span>Inventory</a><a data-p="staff"><span class="ic">♙</span>Staff</a><a data-p="cust"><span class="ic">☺</span>Customers</a><a data-p="rep"><span class="ic">✦</span>Reports</a>
+<div style="margin-top:auto"><button class="btn theme" onclick="toggleTheme()"><span id="tic">☾</span><em style="font-style:normal" id="tlb">Theme</em></button>
+<div id="cloud-status" style="font-size:11px;line-height:1.5;color:var(--mut);padding:8px 4px" role="status">Cloud: connecting…</div>
+<button class="btn" style="width:100%;margin:2px 0" onclick="refreshCloud()">↻ Refresh cloud data</button>
+<button class="btn" style="width:100%;margin:2px 0" onclick="backup()">Backup data</button>
+<button class="btn" style="width:100%;margin:2px 0" onclick="restore()">Restore data</button>
+<button class="btn" style="width:100%;margin:2px 0" id="lo" onclick="logout()">Logout</button></div></nav>
+<main id="app"></main>
+
+<script>
+/* ===== SUPABASE CONFIG: fill both values before opening the app ===== */
+const SUPABASE_URL = '';      // e.g. https://xxxx.supabase.co
+const SUPABASE_KEY = '';      // anon public key
+/* Public anon/publishable key only. NEVER paste the Supabase service_role key. */
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const RM = n => 'RM ' + Number(n || 0).toFixed(2);
+const today = () => new Date().toISOString().slice(0, 10);
+const uid = () => Date.now() + Math.floor(Math.random() * 1000);
+const K = 'shoppos_db'; // Legacy browser-only data, offered for one-time migration.
+const emptyDb = () => ({products:[],orders:[],customers:[],inventory:[],cash:[],staff:[]});
+function upgradeDb(raw) {
+  const value = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+  const result = {...emptyDb(),...value};
+  for (const a of ['products','orders','customers','inventory','cash','staff'])
+    if (!Array.isArray(result[a])) result[a] = [];
+  result.products.forEach(p => {
+    if (!Array.isArray(p.variants)) p.variants = [];
+    if (p.stock === undefined) p.stock = 0;
+  });
+  return result;
+}
+let db = emptyDb();
+let cloudReady = false, cloudUser = null, cloudVersion = 0, cloudQueue = Promise.resolve(), cloudFailed = false;
+const status = (label, bad = false) => { const el = $('#cloud-status'); if (el) { el.textContent = label; el.style.color = bad ? 'var(--bad)' : 'var(--mut)'; } };
+function save() {
+  if (!cloudReady || !cloudUser || cloudFailed) {
+    status('Cloud: not saved — please reconnect', true);
+    return;
+  }
+  // Snapshot every operation; serialize updates to avoid out-of-order writes.
+  const snapshot = JSON.parse(JSON.stringify(db));
+  status('Cloud: saving…');
+  cloudQueue = cloudQueue.then(async () => {
+    if (cloudFailed || !cloudReady) return;
+    const {data, error} = await sb.rpc('save_business_state', {
+      expected_version: cloudVersion, next_payload: snapshot
+    });
+    if (error || typeof data !== 'number') {
+      cloudFailed = true;
+      localStorage.setItem('tt_cloud_recovery', JSON.stringify(snapshot));
+      status('Cloud save FAILED — download a backup, then reload', true);
+      alert('Could not save to Supabase. Your changes are NOT confirmed in the cloud. Use Backup data to keep a copy, then reload. ' + (error?.message || 'Unknown error'));
+      return;
+    }
+    cloudVersion = data;
+    status('Cloud: saved ✓');
+  }).catch(e => {
+    cloudFailed = true;
+    localStorage.setItem('tt_cloud_recovery', JSON.stringify(snapshot));
+    status('Cloud save FAILED — download a backup, then reload', true);
+    alert('Cloud save failed: ' + e.message);
+  });
+  return cloudQueue;
+}
+// The selected seller stays on this browser until deliberately changed.
+let activeSeller = localStorage.getItem('tt_active_seller') || '';
+const getSeller = id => db.staff.find(s => String(s.id) === String(id));
+const sellerName = o => o.sellerName || getSeller(o.sellerId)?.name || 'Unassigned';
+function sellerOptions(includeInactiveId) {
+  return db.staff.filter(s => s.status === 'Active' || String(s.id) === String(includeInactiveId))
+    .map(s => ({ id: String(s.id), name: s.name }));
+}
+function changeSeller(id) {
+  activeSeller = id;
+  localStorage.setItem('tt_active_seller', id);
+  go('pos');
+}
+
+
+/* ---------- theme, toast, effects ---------- */
+function paintTheme() { const d = document.documentElement.dataset.theme === 'dark'; $('#tic').textContent = d ? '☀' : '☾'; $('#tlb').textContent = d ? 'Beige mode' : 'Choco mode'; }
+function toggleTheme() { const n = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = n; try { localStorage.setItem('tt_theme', n); } catch {} paintTheme(); }
+let tt; function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), 2600); }
+function coins() { for (let i = 0; i < 26; i++) { const c = document.createElement('i'); c.className = 'coin'; c.style.left = '50%'; c.style.top = '60%'; c.style.setProperty('--x', (Math.random() * 600 - 300) + 'px'); c.style.setProperty('--y', (Math.random() * -420 - 40) + 'px'); document.body.appendChild(c); setTimeout(() => c.remove(), 1300); } }
+window.alert = m => { toast(m); if (/completed/i.test(m)) coins(); };
+document.addEventListener('click', e => {
+  const b = e.target.closest('.btn,.pb'); if (!b) return;
+  const r = b.getBoundingClientRect(), s = Math.max(r.width, r.height), p = document.createElement('span');
+  p.className = 'ripple'; p.style.cssText = `width:${s}px;height:${s}px;left:${e.clientX - r.left - s / 2}px;top:${e.clientY - r.top - s / 2}px`;
+  b.appendChild(p); setTimeout(() => p.remove(), 650);
+});
+function countUp() {
+  document.querySelectorAll('#app .cards b').forEach(b => {
+    const t = b.textContent, m = t.match(/-?[\d,]*\.?\d+/); if (!m) return;
+    const end = parseFloat(m[0].replace(/,/g, '')), dec = (m[0].split('.')[1] || '').length, pre = t.slice(0, m.index), suf = t.slice(m.index + m[0].length), s = performance.now();
+    (function f(n) { const k = Math.min(1, (n - s) / 1000), e = 1 - Math.pow(1 - k, 3); b.textContent = pre + (end * e).toFixed(dec) + suf; if (k < 1) requestAnimationFrame(f); })(s);
+  });
+}
+
+/* ---------- authentication & cloud loading ---------- */
+let sb = null, page = 'dash', started = false;
+if (SUPABASE_URL && SUPABASE_KEY && window.supabase)
+  sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+function loginMessage(msg) { $('#lerr').textContent = msg; $('#login').style.display = 'flex'; }
+async function loadCloud(user) {
+  cloudReady = false; cloudFailed = false; cloudUser = user;
+  status('Cloud: loading…');
+  const {data, error} = await sb.from('business_state').select('payload,version').eq('user_id', user.id).maybeSingle();
+  if (error) throw error;
+  if (data) {
+    db = upgradeDb(data.payload);
+    cloudVersion = data.version;
+  } else {
+    const savedText = localStorage.getItem(K);
+    let initial = emptyDb();
+    if (savedText) {
+      if (confirm('Existing Two Tales data was found in this browser. Import it to your new Supabase account? Select Cancel to start with an empty cloud database.')) {
+        try { initial = upgradeDb(JSON.parse(savedText)); }
+        catch { throw new Error('Existing browser data could not be read. Download a backup from your previous version before proceeding.'); }
+      }
+    }
+    const {data:version, error:createError} = await sb.rpc('save_business_state', {
+      expected_version:0, next_payload:initial
+    });
+    if (createError) throw createError;
+    db = initial;
+    cloudVersion = version;
+  }
+  cloudReady = true;
+  status('Cloud: connected ✓');
+  $('#login').style.display = 'none';
+  go('dash');
+}
+async function boot() {
+  paintTheme();
+  $('#login').style.display = 'flex';
+  if (!sb) return loginMessage('Setup required: enter your Supabase Project URL and public anon/publishable key in the HTML file, then run the included SQL script.');
+  try {
+    const {data,error} = await sb.auth.getUser();
+    if (error || !data?.user) return;
+    await loadCloud(data.user);
+  } catch(e) { loginMessage('Supabase connection error: ' + e.message); status('Cloud: connection failed',true); }
+}
+async function auth() {
+  if (!sb) return loginMessage('Configure Supabase first; see the setup guide.');
+  const email = $('#em').value.trim(), password = $('#pw').value;
+  if (!email || !password) return loginMessage('Enter your email and password.');
+  $('#lerr').textContent = 'Signing in…';
+  try {
+    const {data,error} = await sb.auth.signInWithPassword({email,password});
+    if (error) throw error;
+    if (!data.user) throw new Error('No authenticated user returned');
+    await loadCloud(data.user);
+    $('#pw').value = '';
+  } catch(e) { loginMessage(e.message); status('Cloud: sign in failed',true); }
+}
+async function refreshCloud() {
+  if (!cloudReady || cloudFailed) return alert('Reload and sign in to reconnect the cloud first.');
+  await cloudQueue;
+  if (cloudFailed) return;
+  if (!confirm('Refresh from Supabase? This replaces the current page data with the latest saved version.')) return;
+  try { await loadCloud(cloudUser); toast('Cloud data refreshed'); }
+  catch(e) { alert('Refresh failed: '+e.message); }
+}
+async function logout() {
+  if (!sb) return;
+  await cloudQueue;
+  if (cloudFailed && !confirm('Some changes failed to save. Download a backup before logging out. Continue?')) return;
+  await sb.auth.signOut(); cloudReady = false; cloudUser = null; location.reload();
+}
+
+/* ---------- helpers ---------- */
+/* table with optional row selection: sel = { a: 'arrayName', ids: [rowId or null per row] } */
+let ctxCust = null;
+const SEL = {}, TIDS = {}, NC = '(no change)';
+const selOf = a => SEL[a] || (SEL[a] = new Set());
+const tbl = (h, rows, sel) => {
+  if (sel) { TIDS[sel.a] = sel.ids.filter(x => x != null); const S = selOf(sel.a); [...S].forEach(x => { if (!TIDS[sel.a].includes(x)) S.delete(x); }); }
+  const all = sel && TIDS[sel.a].length && TIDS[sel.a].every(x => selOf(sel.a).has(x));
+  const head = (sel ? [`<input type="checkbox" class="ck" id="all-${sel.a}" ${all ? 'checked' : ''} onchange="selAll('${sel.a}',this.checked)" title="Select all">`] : []).concat(h);
+  const body = rows.map((r, n) => {
+    const id = sel ? sel.ids[n] : null;
+    const cells = sel ? [id == null ? '' : `<input type="checkbox" class="ck" data-a="${sel.a}" ${selOf(sel.a).has(id) ? 'checked' : ''} onchange="selOne('${sel.a}',${id},this.checked)">`].concat(r) : r;
+    return `<tr style="--r:${Math.min(n, 14)}">${cells.map(c => `<td>${c}</td>`).join('')}</tr>`;
+  });
+  return `<div class="tw"><table><thead><tr>${head.map(x => `<th>${x}</th>`).join('')}</tr></thead><tbody>${body.length ? body.join('') : `<tr><td colspan="${head.length}" class="mut">No data</td></tr>`}</tbody></table></div>`;
+};
+const bulk = a => `<div class="row bulk"><span class="mut" id="bk-${a}">${selOf(a).size} selected</span><button class="btn" onclick="selAll('${a}',true)">Select all</button><button class="btn" onclick="selAll('${a}',false)">Clear</button><button class="btn" onclick="bulkEdit('${a}')">Edit selected</button><button class="btn d" onclick="delSel('${a}')">Delete selected</button></div>`;
+function updBulk(a) {
+  const e = $('#bk-' + a); if (e) e.textContent = selOf(a).size + ' selected';
+  const h = $('#all-' + a); if (h) h.checked = TIDS[a].length > 0 && TIDS[a].every(x => selOf(a).has(x));
+}
+function selAll(a, on) { SEL[a] = new Set(on ? TIDS[a] : []); document.querySelectorAll('.ck[data-a="' + a + '"]').forEach(c => c.checked = on); updBulk(a); }
+function selOne(a, id, on) { on ? selOf(a).add(id) : selOf(a).delete(id); updBulk(a); }
+function delSel(a) {
+  const S = selOf(a); if (!S.size) return alert('Select at least one row first');
+  if (!confirm('Remove ' + S.size + ' selected item(s)?')) return;
+  db[a] = db[a].filter(x => !S.has(x.id)); if (a === 'orders') db.cash = db.cash.filter(c => !S.has(c.ref));
+  SEL[a] = new Set(); save(); go(page);
+}
+const BF = {
+  products: [{ k: 'price', l: 'Base price', n: 1 }, { k: 'cost', l: 'Cost', n: 1 }, { k: 'stock', l: 'Stock (products without variants)', n: 1 }],
+  orders: [{ k: 'status', l: 'Status', o: ['Pending', 'Completed', 'Cancelled'] }, { k: 'payment', l: 'Payment', o: ['Cash', 'QR PAY'] }, { k: 'due', l: 'Due / delivery date', t: 'date' }],
+  inventory: [{ k: 'stock', l: 'In stock', n: 1 }, { k: 'reorder', l: 'Reorder level', n: 1 }, { k: 'cost', l: 'Unit cost', n: 1 }],
+  customers: [{ k: 'phone', l: 'Phone' }, { k: 'notes', l: 'Notes' }, { k: 'spent', l: 'Total spent (RM)', n: 1 }],
+  cash: [{ k: 'type', l: 'Type', o: ['in', 'out'] }, { k: 'date', l: 'Date', t: 'date' }, { k: 'amount', l: 'Amount', n: 1 }]
+};
+function bulkEdit(a) {
+  const S = selOf(a); if (!S.size) return alert('Select at least one row first');
+  const F = BF[a];
+  form('Edit ' + S.size + ' selected (blank = keep as is)', F.map(f => f.o ? { k: f.k, l: f.l, t: 'select', o: [NC, ...f.o] } : { k: f.k, l: f.l, t: f.t || 'text' }), {}, r => {
+    db[a].filter(x => S.has(x.id)).forEach(x => F.forEach(f => {
+      let v = r[f.k]; if (v === undefined || v === '' || v === NC) return;
+      if (f.n) { v = parseFloat(v); if (isNaN(v)) return; }
+      x[f.k] = v;
+    }));
+    if (a === 'orders') db.orders.filter(x => S.has(x.id)).forEach(syncCash);
+    save(); go(page);
+  });
+}
+const tag = s => `<span class="tag ${s}">${s}</span>`;
+const closeM = () => { ctxCust = null; $('#modal').style.display = 'none'; };
+function form(title, fields, vals, cb) {
+  $('#modal').innerHTML = `<div class="box"><h3>${title}</h3>${fields.map(f => `<label>${f.l}${
+    f.t === 'select' ? `<select name="${f.k}">${f.o.map(o => `<option value="${esc(o)}" ${o == vals[f.k] ? 'selected' : ''}>${esc((f.labels && f.labels[o]) || (o === '' ? '— Unassigned —' : o))}</option>`).join('')}</select>`
+    : f.t === 'area' ? `<textarea name="${f.k}" rows="5">${esc(vals[f.k] ?? '')}</textarea>`
+    : `<input name="${f.k}" type="${f.t || 'text'}" step="any" value="${esc(vals[f.k] ?? '')}">`}</label>`).join('')}
+    <div class="row"><button class="btn" onclick="closeM()">Cancel</button><button class="btn p" id="ok">Save</button></div></div>`;
+  $('#modal').style.display = 'flex';
+  $('#ok').onclick = () => { const o = {}; $('#modal').querySelectorAll('[name]').forEach(e => o[e.name] = e.type === 'number' ? parseFloat(e.value) || 0 : e.value); closeM(); cb(o); };
+}
+const del = (arr, id, after) => { if (confirm('Remove this item?')) { db[arr] = db[arr].filter(x => x.id !== id); if (arr === 'orders') db.cash = db.cash.filter(c => c.ref !== id); save(); after ? after() : go(page); } };
+const dl = (name, text, type) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); };
+const pick = cb => { const i = document.createElement('input'); i.type = 'file'; i.onchange = () => { const r = new FileReader(); r.onload = () => cb(r.result); r.readAsText(i.files[0]); }; i.click(); };
+const backup = () => dl('twotales-backup.json', JSON.stringify(db), 'application/json');
+const restore = () => pick(t => { try { const incoming = JSON.parse(t); if (!incoming || !Array.isArray(incoming.products) || !Array.isArray(incoming.orders)) throw new Error('Not a Two Tales backup'); if (!confirm('Replace all cloud business records with this backup? This cannot be undone.')) return; db = upgradeDb(incoming); save(); go(page); } catch(e) { alert('Invalid backup file: '+e.message); } });
+const sold = o => o.status !== 'Cancelled';
+const qtyOf = o => o.items.reduce((a, i) => a + i.qty, 0);
+const costOf = o => o.items.reduce((a, i) => a + i.qty * (i.cost || 0), 0);
+
+/* ---------- navigation ---------- */
+const views = { dash, pos, products, orders, cal: calendar, inv, staff, cust, rep };
+function go(p) {
+  if (!cloudReady) return;
+  const same = started && p === page;   // refresh of the same page -> no replayed entrance animation
+  started = true; page = p;
+  document.querySelectorAll('nav a').forEach(a => a.classList.toggle('on', a.dataset.p === p));
+  const app = $('#app');
+  app.classList.toggle('still', same);
+  app.innerHTML = views[p]();
+  if (!same) {
+    app.querySelectorAll(':scope>*').forEach((el, i) => el.style.setProperty('--i', i));
+    app.querySelectorAll('.cards>.card,.pg>.pb,.grid2>*').forEach((el, i) => el.style.setProperty('--i', i + 1));
+    countUp(); window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+document.querySelectorAll('nav a').forEach(a => a.onclick = () => go(a.dataset.p));
+
+/* ---------- dashboard ---------- */
+function dash() {
+  const os = db.orders.filter(sold), t = today();
+  const low = db.inventory.filter(i => i.stock <= i.reorder).length;
+  return `<h2>Dashboard</h2><div class="cards">
+  <div class="card">Today's sales<b>${RM(os.filter(o => o.date === t).reduce((a, o) => a + o.total, 0))}</b></div>
+  <div class="card">Total revenue<b>${RM(os.reduce((a, o) => a + o.total, 0))}</b></div>
+  <div class="card">Pending orders<b>${db.orders.filter(o => o.status === 'Pending').length}</b></div>
+  <div class="card">To restock<b>${low}</b></div>
+  <div class="card">Customers<b>${db.customers.length}</b></div></div>
+  <div class="card"><h3>Recent orders</h3>${tbl(['#', 'Date', 'Customer', 'Total', 'Status'], db.orders.slice(-6).reverse().map(o => [o.no, o.date, esc(o.customer), RM(o.total), tag(o.status)]))}</div>`;
+}
+
+/* ---------- point of sales ---------- */
+let cart = [], pm = 'Cash', ctype = 'Walk-in', cmem = '', tender = '';
+const sub = () => cart.reduce((a, c) => a + c.price * c.qty, 0);
+function pos() {
+  const s = sub(), chg = (parseFloat(tender) || 0) - s;
+  return `<h2>Point of Sales</h2><div class="grid2"><div>
+  <div class="card"><div class="row" style="justify-content:space-between"><h3>Choose products</h3><button class="btn" onclick="go('products')">Manage products</button></div>
+  <div class="pg">${db.products.flatMap(p => p.variants.length ? p.variants.map(v => ({p,v})) : [{p,v:null}]).map(({p,v}) => {
+    const stock = v ? v.stock : p.stock, title = p.name + (v ? ' — ' + v.name : '');
+    return `<button class="pb" ${stock <= 0 ? 'disabled title="Out of stock" style="opacity:.48;cursor:not-allowed"' : ''} onclick="addC(${p.id},${v ? v.id : 'null'})"><b>${esc(title)}</b><br>${RM(v ? v.price : p.price)}<br><small class="mut">${stock} in stock</small></button>`;
+  }).join('') || '<span class="mut">No products yet. Add them from Products.</span>'}</div></div></div>
+  <div class="card"><h3>Current sale</h3>
+  <div class="seller-panel"><div><strong>Sales staff on duty</strong><div class="mut" style="font-size:12px">Every completed sale is attributed to this staff member.</div></div>
+  <label>Seller<select onchange="changeSeller(this.value)"><option value="">— Select sales staff —</option>${sellerOptions().map(x => `<option value="${esc(x.id)}" ${String(activeSeller) === x.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>
+  ${!db.staff.some(x => x.status === 'Active') ? `<p class="mut">No active staff registered. <button class="btn" onclick="go('staff')">Register staff</button></p>` : ''}</div>
+  <label>Customer<select onchange="ctype=this.value;go('pos')"><option ${ctype === 'Walk-in' ? 'selected' : ''}>Walk-in</option><option ${ctype === 'Member' ? 'selected' : ''}>Member</option></select></label>
+  ${ctype === 'Member' ? `<label>Select member<select onchange="cmem=this.value"><option value="" ${!cmem ? 'selected' : ''}>— Choose customer —</option>${db.customers.map(c => `<option value="${esc(c.name)}" ${c.name === cmem ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label>` : ''}
+  ${tbl(['Item', 'Qty', 'Total', ''], cart.map((c, i) => [esc(c.name), `<button class="btn" onclick="qty(${i},-1)">-</button> ${c.qty} <button class="btn" onclick="qty(${i},1)">+</button>`, RM(c.price * c.qty), `<button class="btn d" onclick="cart.splice(${i},1);go('pos')">x</button>`]))}
+  <p>Subtotal <span class="big" style="float:right">${RM(s)}</span></p>
+  <label>Payment<select onchange="pm=this.value;go('pos')"><option ${pm === 'Cash' ? 'selected' : ''}>Cash</option><option ${pm === 'QR PAY' ? 'selected' : ''}>QR PAY</option></select></label>
+  ${pm === 'Cash' ? `<label>Cash received<input type="number" value="${tender}" oninput="tender=this.value;$('#chg').textContent=RM((parseFloat(tender)||0)-sub())"></label><p>Change: <b id="chg">${RM(chg)}</b></p>`
+    : `<img class="qr" src="qr.png" alt="Put your qr.png in the repo root"><p class="mut" style="text-align:center">Customer scans to pay</p>`}
+  <button class="btn p" style="width:100%" onclick="checkout()">Complete sale</button></div></div>`;
+}
+// Product variants have independent prices and stock, while products without variants use base stock.
+function productChoice(id, variantId) {
+  const p = db.products.find(x => x.id === id); if (!p) return null;
+  const v = variantId == null ? null : p.variants.find(x => x.id === variantId);
+  if (variantId != null && !v) return null;
+  return {p, v, key: `${id}:${v ? v.id : 'base'}`, stock: v ? v.stock : p.stock};
+}
+function addC(id, variantId) {
+  const choice = productChoice(id, variantId); if (!choice) return alert('Product not found');
+  const c = cart.find(x => x.key === choice.key);
+  if ((c ? c.qty : 0) >= choice.stock) return alert('Not enough stock available');
+  if (c) c.qty++;
+  else cart.push({key:choice.key, id, productId:id, variantId, name:choice.p.name + (choice.v ? ' — ' + choice.v.name : ''), price:choice.v ? choice.v.price : choice.p.price, cost:choice.p.cost, qty:1});
+  go('pos');
+}
+function qty(i, d) {
+  const c = cart[i]; if (!c) return;
+  if (d > 0) { const choice = productChoice(c.productId, c.variantId); if (!choice || c.qty + d > choice.stock) return alert('Not enough stock available'); }
+  c.qty += d; if (c.qty < 1) cart.splice(i, 1); go('pos');
+}
+
+/* ---------- dedicated product catalogue ---------- */
+function products() {
+  const stock = db.products.reduce((sum,p) => sum + (p.variants.length ? p.variants.reduce((n,v)=>n+v.stock,0) : p.stock),0);
+  const low = db.products.filter(p => (p.variants.length ? p.variants.some(v=>v.stock<=0) : p.stock<=0)).length;
+  return `<h2>Product Management</h2><div class="cards"><div class="card">Products<b>${db.products.length}</b></div><div class="card">Total units in stock<b>${stock}</b></div><div class="card">Products with sold-out options<b>${low}</b></div></div>
+  <div class="card"><div class="row"><button class="btn p" onclick="editP()">+ Add product</button></div><p class="mut">Manage product titles, prices, quantities and variants here. Each variant has its own price and stock count. Stock automatically decreases after POS checkout.</p>
+  ${bulk('products')}
+  ${tbl(['Product title','Base price','Stock','Variants','Cost','Actions'], db.products.map(p => [esc(p.name),RM(p.price),p.variants.length ? p.variants.reduce((n,v)=>n+v.stock,0) : p.stock,p.variants.length ? p.variants.map(v=>`${esc(v.name)} (${RM(v.price)}, ${v.stock} left)`).join('<br>') : '<span class="mut">None</span>',RM(p.cost),`<button class="btn" onclick="editP(${p.id})">Edit</button> <button class="btn d" onclick="del('products',${p.id})">Remove</button>`]),{a:'products',ids:db.products.map(p=>p.id)})}</div>`;
+}
+/* Editable variant rows: products can have zero or more named variants. */
+let draftVariantKeys = 0;
+function addVariantRow(v = {}) {
+  const wrap = $('#variant-list');
+  if (!wrap) return;
+  const row = document.createElement('div');
+  row.className = 'variant-entry';
+  row.dataset.variantId = v.id ?? '';
+  row.innerHTML = `<div class="variant-fields">
+    <label>Variant name<input class="var-name" type="text" placeholder="e.g. Chocolate Brown" value="${esc(v.name ?? '')}"></label>
+    <label>Price (RM)<input class="var-price" type="number" min="0" step="0.01" placeholder="12.00" value="${esc(v.price ?? '')}"></label>
+    <label>Stock<input class="var-stock" type="number" min="0" step="1" placeholder="15" value="${esc(v.stock ?? '')}"></label>
+    <button class="btn d variant-remove" type="button" onclick="this.closest('.variant-entry').remove()">Remove</button>
+  </div>`;
+  wrap.appendChild(row);
+  row.querySelector('.var-name').focus();
+}
+function editP(id) {
+  const p = db.products.find(x => x.id === id);
+  const v = p || {name:'',price:0,stock:0,cost:0,variants:[]};
+  $('#modal').innerHTML = `<div class="box product-editor"><h3>${p?'Edit product':'Add product'}</h3>
+    <label>Product title<input id="prod-name" type="text" value="${esc(v.name)}" placeholder="e.g. Satin Scrunchie"></label>
+    <div class="product-base-fields">
+      <label>Base price (RM)<input id="prod-price" type="number" min="0" step="0.01" value="${esc(v.price)}"></label>
+      <label>Base stock<input id="prod-stock" type="number" min="0" step="1" value="${esc(v.stock)}"></label>
+      <label>Unit cost (RM)<input id="prod-cost" type="number" min="0" step="0.01" value="${esc(v.cost)}"></label>
+    </div>
+    <p class="mut product-tip">Base price and stock apply when there are no variants. Products with variants use each variant's own price and stock.</p>
+    <div class="row" style="justify-content:space-between"><h3 style="margin:0">Variants</h3><button class="btn p" type="button" onclick="addVariantRow()">+ Add Variant</button></div>
+    <div id="variant-list"></div>
+    <p class="mut product-tip">Optional. Add as many variants as you need, or leave this section empty.</p>
+    <div class="row" style="justify-content:flex-end"><button class="btn" type="button" onclick="closeM()">Cancel</button><button class="btn p" type="button" onclick="saveProductEditor(${p ? p.id : 'null'})">Save product</button></div>
+  </div>`;
+  $('#modal').style.display = 'flex';
+  (v.variants || []).forEach(variant => addVariantRow(variant));
+}
+function saveProductEditor(id) {
+  const p = db.products.find(x => x.id === id);
+  const name = $('#prod-name').value.trim();
+  const price = Number($('#prod-price').value), stock = Number($('#prod-stock').value), cost = Number($('#prod-cost').value);
+  if (!name) return alert('Enter a product title');
+  if (!Number.isFinite(price) || price < 0 || !Number.isInteger(stock) || stock < 0 || !Number.isFinite(cost) || cost < 0 || !$('#prod-price').value || !$('#prod-stock').value || !$('#prod-cost').value) return alert('Enter valid non-negative prices and a whole number for stock');
+  const variants = [], names = new Set();
+  for (const row of document.querySelectorAll('#variant-list .variant-entry')) {
+    const vn = row.querySelector('.var-name').value.trim();
+    const vpInput = row.querySelector('.var-price').value, vsInput = row.querySelector('.var-stock').value;
+    const vp = Number(vpInput), vs = Number(vsInput);
+    if (!vn || !vpInput || !vsInput || !Number.isFinite(vp) || vp < 0 || !Number.isInteger(vs) || vs < 0) return alert('Each variant needs a name, a non-negative price and a whole-number stock quantity');
+    if (names.has(vn.toLowerCase())) return alert('Variant names must be unique');
+    names.add(vn.toLowerCase());
+    const oldId = row.dataset.variantId;
+    variants.push({id:oldId ? Number(oldId) : uid() + variants.length, name:vn, price:vp, stock:vs});
+  }
+  const data={name,price,stock,cost,variants};
+  if(p) Object.assign(p,data); else db.products.push({id:uid(),...data});
+  save(); closeM(); go('products'); toast('Product updated — syncing to cloud');
+}
+const nextNo = () => Math.max(0, ...db.orders.map(o => o.no)) + 1;
+let checkoutBusy = false;
+async function checkout() {
+  if (checkoutBusy) return;
+  if (!cart.length) return alert('Cart is empty');
+  const seller = getSeller(activeSeller);
+  if (!seller || seller.status !== 'Active') return alert('Please select an active sales staff member first');
+  if (ctype === 'Member' && (!cmem || !db.customers.some(c => c.name === cmem))) return alert('Select a valid member');
+  // Check stock again at checkout, then deduct all items only after validation.
+  for (const c of cart) { const ch = productChoice(c.productId, c.variantId); if (!ch || ch.stock < c.qty) return alert('Stock changed for '+c.name+'. Please review the cart'); }
+  const customerRecord = ctype === 'Member' ? db.customers.find(c => c.name === cmem) : null;
+  const o = { id: uid(), no: nextNo(), date: today(), due: today(), customer: customerRecord ? customerRecord.name : 'Walk-in', customerId: customerRecord ? customerRecord.id : null, items: cart.map(c => ({ ...c })), total: sub(), paid: sub(), status: 'Completed', payment: pm, sellerId: seller.id, sellerName: seller.name };
+  for (const c of cart) { const ch=productChoice(c.productId,c.variantId); if (ch.v) ch.v.stock-=c.qty; else ch.p.stock-=c.qty; }
+  db.orders.push(o); syncCash(o);
+  checkoutBusy = true;
+  await save();
+  checkoutBusy = false;
+  if (cloudFailed) return; // Do not claim a completed checkout if Supabase rejected it.
+  cart = []; tender = ''; go('pos'); alert('Sale #' + o.no + ' completed and saved to cloud');
+}
+function syncCash(o) {
+  db.cash = db.cash.filter(c => c.ref !== o.id);
+  if (o.paid > 0 && sold(o)) db.cash.push({ id: uid(), date: o.date, description: 'Order #' + o.no + ' (' + o.payment + ')', type: 'in', amount: o.paid, ref: o.id });
+}
+
+/* ---------- orders ---------- */
+function orders() {
+  const L = db.orders.slice().reverse();
+  return `<h2>Orders &amp; Sales</h2><div class="card"><div class="row"><button class="btn p" onclick="editO()">+ New order</button></div>${bulk('orders')}
+  ${tbl(['#', 'Date', 'Customer', 'Seller', 'Items', 'Qty', 'Total', 'Payment', 'Due', 'Status', ''], L.map(o => [o.no, o.date, esc(o.customer), esc(sellerName(o)), esc(o.items.map(i => i.name + ' x' + i.qty).join(', ')), qtyOf(o), RM(o.total), esc(o.payment), RM(Math.max(0, o.total - o.paid)), tag(o.status), `<button class="btn" onclick="editO(${o.id})">Edit</button> <button class="btn d" onclick="del('orders',${o.id})">Remove</button>`]), { a: 'orders', ids: L.map(o => o.id) })}</div>`;
+}
+function editO(id, preset) {
+  const back = ctxCust;
+  const o = db.orders.find(x => x.id === id) || {};
+  const v = { ...o, sellerChoice: o.sellerId != null ? String(o.sellerId) : (id ? '' : activeSeller), customer: o.customer || preset, items: (o.items || []).map(i => `${i.name} | ${i.qty} | ${i.price}`).join('\n'), date: o.date || today(), due: o.due || today() };
+  form(id ? 'Edit order' : 'New order', [
+    { k: 'customer', l: 'Customer', t: 'select', o: ['Walk-in', ...db.customers.map(c => c.name)] },
+    { k: 'sellerChoice', l: 'Sales staff', t: 'select', o: ['', ...sellerOptions(o.sellerId).map(x => x.id)] , labels: Object.fromEntries(sellerOptions(o.sellerId).map(x => [x.id, x.name])) },
+    { k: 'date', l: 'Order date', t: 'date' }, { k: 'due', l: 'Due / delivery date', t: 'date' },
+    { k: 'items', l: 'Items (one per line: name | qty | price)', t: 'area' },
+    { k: 'paid', l: 'Amount paid', t: 'number' }, { k: 'payment', l: 'Payment', t: 'select', o: ['Cash', 'QR PAY'] },
+    { k: 'status', l: 'Status', t: 'select', o: ['Pending', 'Completed', 'Cancelled'] }], v, r => {
+    r.items = r.items.split('\n').map(l => l.split('|').map(x => x.trim())).filter(p => p[0]).map(p => {
+      const pr = db.products.find(x => x.name.toLowerCase() === p[0].toLowerCase());
+      return { name: p[0], qty: parseFloat(p[1]) || 1, price: p[2] !== undefined && p[2] !== '' ? parseFloat(p[2]) : (pr ? pr.price : 0), cost: pr ? pr.cost : 0 };
+    });
+    const selected = getSeller(r.sellerChoice);
+    // Preserve a name snapshot for past sales, even if the staff profile is later removed.
+    r.sellerId = selected ? selected.id : null;
+    r.sellerName = selected ? selected.name : 'Unassigned';
+    delete r.sellerChoice;
+    r.total = r.items.reduce((a, i) => a + i.qty * i.price, 0);
+    r.customerId = db.customers.find(c => c.name === r.customer)?.id ?? null;
+    if (id) Object.assign(o, r); else { Object.assign(o, { id: uid(), no: nextNo() }, r); db.orders.push(o); }
+    syncCash(o); save(); go(page === 'cal' || page === 'cust' ? page : 'orders'); if (back) custOrders(back);
+  });
+}
+
+/* ---------- calendar ---------- */
+let calD = new Date(); calD.setDate(1);
+function calendar() {
+  const y = calD.getFullYear(), m = calD.getMonth(), first = calD.getDay(), days = new Date(y, m + 1, 0).getDate();
+  let cells = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<div class="h">${d}</div>`).join('') + '<div style="border:0;background:none"></div>'.repeat(first);
+  for (let d = 1; d <= days; d++) {
+    const ds = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    cells += `<div><b>${d}</b>${db.orders.filter(o => o.due === ds && sold(o)).map(o => `<span class="ev" onclick="editO(${o.id})">#${o.no} ${esc(o.customer)}</span>`).join('')}</div>`;
+  }
+  return `<h2>Order Calendar</h2><div class="card"><div class="row"><button class="btn" onclick="calD.setMonth(calD.getMonth()-1);go('cal')">&lt;</button>
+  <b>${calD.toLocaleString('en', { month: 'long', year: 'numeric' })}</b><button class="btn" onclick="calD.setMonth(calD.getMonth()+1);go('cal')">&gt;</button></div><div class="cal">${cells}</div></div>`;
+}
+
+/* ---------- inventory ---------- */
+const stat = i => i.stock <= 0 ? 'Out' : i.stock <= i.reorder ? 'Restock' : 'OK';
+function inv() {
+  const val = db.inventory.reduce((a, i) => a + i.stock * i.cost, 0);
+  return `<h2>Inventory</h2><div class="cards"><div class="card">Total items<b>${db.inventory.length}</b></div><div class="card">Stock value<b>${RM(val)}</b></div>
+  <div class="card">To restock<b>${db.inventory.filter(i => i.stock <= i.reorder).length}</b></div></div>
+  <div class="card"><div class="row"><button class="btn p" onclick="editI()">+ Add material</button></div>${bulk('inventory')}
+  ${tbl(['Material', 'In stock', 'Reorder level', 'Unit cost', 'Value', 'Status', ''], db.inventory.map(i => [esc(i.name), i.stock, i.reorder, RM(i.cost), RM(i.stock * i.cost), tag(stat(i)), `<button class="btn" onclick="editI(${i.id})">Edit</button> <button class="btn d" onclick="del('inventory',${i.id})">Remove</button>`]), { a: 'inventory', ids: db.inventory.map(i => i.id) })}</div>`;
+}
+const editI = id => form(id ? 'Edit material' : 'Add material', [{ k: 'name', l: 'Material' }, { k: 'stock', l: 'In stock', t: 'number' }, { k: 'reorder', l: 'Reorder level', t: 'number' }, { k: 'cost', l: 'Unit cost', t: 'number' }], db.inventory.find(i => i.id === id) || {}, o => {
+  id ? Object.assign(db.inventory.find(i => i.id === id), o) : db.inventory.push({ id: uid(), ...o }); save(); go('inv'); });
+
+/* ---------- staff registration & management ---------- */
+function staff() {
+  const all = db.staff;
+  return `<h2>Staff Management</h2>
+  <div class="cards"><div class="card">Registered staff<b>${all.length}</b></div><div class="card">Active staff<b>${all.filter(x => x.status === 'Active').length}</b></div></div>
+  <div class="card"><div class="row"><button class="btn p" onclick="editStaff()">+ Register staff</button></div>
+  <p class="mut">Register your sales team here. Active staff can be selected at checkout. Staff are recorded on each sale for reporting.</p>
+  ${tbl(['Staff name','Role','Phone','Start date','Status',''], all.map(x => [esc(x.name),esc(x.role),esc(x.phone),esc(x.since),tag(x.status),`<button class="btn" onclick="editStaff(${x.id})">Edit</button> <button class="btn d" onclick="deleteStaff(${x.id})">Remove</button>`]))}</div>`;
+}
+function editStaff(id) {
+  const previous = db.staff.find(x => x.id === id);
+  form(previous ? 'Edit staff' : 'Register staff', [
+    { k:'name', l:'Full name' },
+    { k:'role', l:'Staff role', t:'select', o:['Sales Staff','Sales Assistant','Cashier','Supervisor','Manager','Other'] },
+    { k:'phone', l:'Phone number' },
+    { k:'since', l:'Start date', t:'date' },
+    { k:'status', l:'Status', t:'select', o:['Active','Inactive'] }
+  ], previous || { role:'Sales Staff', since:today(), status:'Active' }, r => {
+    r.name = r.name.trim();
+    if (!r.name) return alert('Staff name is required');
+    if (previous) Object.assign(previous, r);
+    else db.staff.push({ id:uid(), ...r });
+    save(); go('staff'); toast('Staff record updated — syncing to cloud');
+  });
+}
+function deleteStaff(id) {
+  const x = getSeller(id); if (!x) return;
+  if (!confirm('Remove ' + x.name + ' from staff? Past orders will retain the recorded seller name.')) return;
+  db.staff = db.staff.filter(s => s.id !== id);
+  if (String(activeSeller) === String(id)) { activeSeller = ''; localStorage.removeItem('tt_active_seller'); }
+  save(); go('staff');
+}
+
+/* ---------- customers ---------- */
+// Match modern POS records by stable customer ID and legacy orders by customer name.
+const belongsToCustomer = (o, c) => o.customerId != null ? String(o.customerId) === String(c.id) : o.customer === c.name;
+function cust() {
+  return `<h2>Customer History</h2><div class="card"><div class="row"><button class="btn p" onclick="editC()">+ Add customer</button><button class="btn" onclick="impC()">Import CSV</button><button class="btn" onclick="expC()">Export CSV</button></div>${bulk('customers')}
+  ${tbl(['Name', 'Phone', 'Orders', 'Total spent', 'Notes', 'Since', ''], db.customers.map(c => {
+    const os = db.orders.filter(o => belongsToCustomer(o, c) && sold(o));
+    return [esc(c.name), esc(c.phone), os.length, spentCell(c, os), esc(c.notes), esc(c.since), `<button class="btn" onclick="custOrders(${c.id})">Orders</button> <button class="btn" onclick="editC(${c.id})">Edit</button> <button class="btn d" onclick="del('customers',${c.id})">Remove</button>`];
+  }), { a: 'customers', ids: db.customers.map(c => c.id) })}</div>`;
+}
+// Show paid amounts for recorded non-cancelled orders, plus optional historical opening balance.
+// Calculate instead of mutating customer totals: prevents double-counting on edits/refunds/deletes.
+const autoSpent = os => os.reduce((a, o) => a + (Number(o.paid) || 0), 0);
+const spentCell = (c, os) => RM((Number(c.spent) || 0) + autoSpent(os)) + (Number(c.spent) ? ' <span class="tag" title="Includes manually entered historical opening balance">+ opening</span>' : '');
+const editC = id => {
+  const c = db.customers.find(x => x.id === id);
+  const v = c ? { ...c, spent: c.spent ?? '' } : { since: today(), spent: '' };
+  form(id ? 'Edit customer' : 'Add customer', [{ k: 'name', l: 'Name' }, { k: 'phone', l: 'Phone' }, { k: 'spent', l: 'Historical spending before recorded orders (RM) — leave blank if none' }, { k: 'notes', l: 'Notes', t: 'area' }, { k: 'since', l: 'Since', t: 'date' }], v, o => {
+    const sp = String(o.spent).trim(); o.spent = sp === '' ? null : (parseFloat(sp) || 0);
+    if (c) { const old = c.name; Object.assign(c, o); if (old !== c.name) db.orders.forEach(x => { if (String(x.customerId) === String(c.id) || (x.customerId == null && x.customer === old)) { x.customer = c.name; x.customerId = c.id; } }); }
+    else db.customers.push({ id: uid(), ...o });
+    save(); go('cust');
+  });
+};
+const editOFor = cid => editO(undefined, db.customers.find(c => c.id === cid).name);
+function custOrders(id) {
+  const c = db.customers.find(x => x.id === id); if (!c) return; ctxCust = id;
+  const os = db.orders.filter(o => belongsToCustomer(o, c)).slice().reverse();
+  $('#modal').innerHTML = `<div class="box" style="width:780px"><h3>${esc(c.name)} - orders</h3><p class="mut">Total spent: ${spentCell(c, os.filter(sold))}</p>
+  ${tbl(['#', 'Date', 'Seller', 'Items', 'Total', 'Paid', 'Status', ''], os.map(o => [o.no, o.date, esc(sellerName(o)), esc(o.items.map(i => i.name + ' x' + i.qty).join(', ')), RM(o.total), RM(o.paid), tag(o.status), `<button class="btn" onclick="editO(${o.id})">Edit</button>`]))}
+  <div class="row"><button class="btn p" onclick="editOFor(${c.id})">+ New order</button><button class="btn" onclick="closeM()">Close</button></div></div>`;
+  $('#modal').style.display = 'flex';
+}
+const parseCSV = t => t.trim().split(/\r?\n/).map(l => { const r = []; let c = '', q = false; for (const ch of l) { if (ch === '"') q = !q; else if (ch === ',' && !q) { r.push(c); c = ''; } else c += ch; } r.push(c); return r; });
+const impC = () => pick(t => {
+  let rows = parseCSV(t); if (rows[0] && /name/i.test(rows[0][0])) rows.shift();
+  rows.filter(r => r[0]).forEach(r => db.customers.push({ id: uid(), name: r[0], phone: r[1] || '', notes: r[2] || '', since: r[3] || today() }));
+  save(); go('cust');
+});
+const expC = () => dl('customers.csv', ['Name,Phone,Notes,Since', ...db.customers.map(c => [c.name, c.phone, c.notes, c.since].map(x => `"${String(x ?? '').replace(/"/g, '""')}"`).join(','))].join('\n'), 'text/csv');
+
+/* ---------- reports ---------- */
+let from = today().slice(0, 8) + '01', to = today(), reportSeller = 'all';
+function rep() {
+  const os = db.orders.filter(o => sold(o) && o.date >= from && o.date <= to);
+  const cs = db.cash.filter(c => c.date >= from && c.date <= to);
+  const rev = os.reduce((a, o) => a + o.total, 0), gross = rev - os.reduce((a, o) => a + costOf(o), 0);
+  const cin = cs.filter(c => c.type === 'in').reduce((a, c) => a + c.amount, 0), cout = cs.filter(c => c.type === 'out').reduce((a, c) => a + c.amount, 0);
+  const net = gross - cout;
+  const CL = cs.slice().sort((a, b) => a.date < b.date ? 1 : -1);
+  const sellerStats = new Map();
+  for (const o of os) {
+    const key = o.sellerId != null ? String(o.sellerId) : 'unassigned';
+    if (!sellerStats.has(key)) sellerStats.set(key, { key, name: sellerName(o), orders:0, sales:0, paid:0 });
+    const st = sellerStats.get(key); st.orders++; st.sales += o.total; st.paid += Number(o.paid || 0);
+  }
+  // Show active/registered staff even if they have zero sales in the period.
+  for (const x of db.staff) if (!sellerStats.has(String(x.id))) sellerStats.set(String(x.id), {key:String(x.id),name:x.name,orders:0,sales:0,paid:0});
+  const sellerRows = [...sellerStats.values()].sort((a,b) => b.sales-a.sales);
+  const selectedOrders = os.filter(o => reportSeller === 'all' || (reportSeller === 'unassigned' ? o.sellerId == null : String(o.sellerId) === reportSeller));
+  const sellerChoices = [{key:'all',name:'All sales staff'}, ...sellerRows.map(x=>({key:x.key,name:x.name}))];
+  return `<h2>Reports</h2><div class="card"><div class="row"><label>From<input type="date" value="${from}" onchange="from=this.value;go('rep')"></label>
+  <label>To<input type="date" value="${to}" onchange="to=this.value;go('rep')"></label><button class="btn p" onclick="window.print()">Print</button></div></div>
+  <div class="card"><h3>Profit / Loss statement (${from} to ${to})</h3>${tbl(['Item', 'Amount'], [['Revenue (sales)', RM(rev)], ['Gross profit', RM(gross)], ['<b>Net profit</b> (gross profit - cash out expenses)', `<b>${RM(net)}</b>`]])}</div>
+  <div class="card"><h3>Sales performance by staff</h3>
+  <p class="mut">Completed and pending sales excluding cancelled orders, within the report date range. Historical orders without a seller are shown as Unassigned.</p>
+  ${tbl(['Sales staff','Orders','Sales value','Amount paid'], sellerRows.map(x => [esc(x.name),x.orders,RM(x.sales),RM(x.paid)]))}
+  <div class="row"><label style="min-width:220px">Filter transactions by seller
+    <select onchange="reportSeller=this.value;go('rep')">${sellerChoices.map(x => `<option value="${esc(x.key)}" ${reportSeller === x.key ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>
+  <button class="btn" onclick="exportStaffSales()">Export staff sales CSV</button></div>
+  ${tbl(['Order #','Date','Seller','Customer','Amount','Paid','Status'], selectedOrders.slice().reverse().map(o => [o.no,o.date,esc(sellerName(o)),esc(o.customer),RM(o.total),RM(o.paid),tag(o.status)]))}</div>
+  <div class="card"><h3>Cash in / out</h3><div class="cards"><div class="card">Cash in<b>${RM(cin)}</b></div><div class="card">Cash out<b>${RM(cout)}</b></div><div class="card">Net flow<b>${RM(cin - cout)}</b></div></div>
+  <div class="row"><button class="btn p" onclick="editCash()">+ Add cash entry</button></div>
+  ${bulk('cash')}${tbl(['Date', 'Description', 'Type', 'Amount', ''], CL.map(c => [c.date, esc(c.description), c.type === 'in' ? 'Cash in' : 'Cash out', RM(c.amount), c.ref ? '' : `<button class="btn" onclick="editCash(${c.id})">Edit</button> <button class="btn d" onclick="del('cash',${c.id})">Remove</button>`]), { a: 'cash', ids: CL.map(c => c.ref ? null : c.id) })}</div>`;
+}
+function exportStaffSales() {
+  const matches = db.orders.filter(o => sold(o) && o.date >= from && o.date <= to && (reportSeller === 'all' || (reportSeller === 'unassigned' ? o.sellerId == null : String(o.sellerId) === reportSeller)));
+  const rows = [['Order','Date','Seller','Customer','Total','Paid','Status'],...matches.map(o => [o.no,o.date,sellerName(o),o.customer,o.total,o.paid,o.status])];
+  const csv = rows.map(row=>row.map(v => '"' + String(v ?? '').replace(/"/g,'""') + '"').join(',')).join('\r\n');
+  dl('two-tales-staff-sales.csv',csv,'text/csv');
+}
+const editCash = id => {
+  const c = db.cash.find(x => x.id === id);
+  form(id ? 'Edit cash entry' : 'Cash entry', [{ k: 'date', l: 'Date', t: 'date' }, { k: 'description', l: 'Description' }, { k: 'type', l: 'Type', t: 'select', o: ['in', 'out'] }, { k: 'amount', l: 'Amount', t: 'number' }], c || { date: today(), type: 'out' }, o => { c ? Object.assign(c, o) : db.cash.push({ id: uid(), ...o }); save(); go('rep'); });
+};
+
+boot();
+</script><script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js', {scope:'./'})
+      .catch(err => console.warn('PWA service worker unavailable:', err));
+  });
+}
+</script>
+</body></html>

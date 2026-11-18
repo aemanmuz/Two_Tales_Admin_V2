@@ -1,0 +1,25 @@
+{
+  "name": "Two Tales Business Admin",
+  "short_name": "Two Tales",
+  "description": "Products, POS, staff, inventory and sales management for Two Tales.",
+  "id": "/Two_Tales_Business_Apps/",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3e9dc",
+  "theme_color": "#3b2a20",
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
